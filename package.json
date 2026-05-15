@@ -1,7 +1,15 @@
 {
   "name": "create-weekend-app",
-  "version": "1.0.4",
+  "version": "1.0.7",
   "description": "Scaffold a Next.js project with the Weekend Stack (Zustand, React Query, Framer Motion, Recharts, Sonner)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mohdasifabid/create-weekend-app.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mohdasifabid/create-weekend-app/issues"
+  },
+  "homepage": "https://github.com/mohdasifabid/create-weekend-app#readme",
   "main": "index.js",
   "bin": {
     "create-weekend-app": "index.js"

@@ -93,22 +93,32 @@ export const useStore = create<CounterState>((set) => ({
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ThemeProvider } from 'next-themes';
 import { GoogleAnalytics } from '@next/third-parties/google';
 
 export function WeekendProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
+  const [mounted, setMounted] = useState(false);
   
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Replace with your GA Measurement ID
   const GA_ID = process.env.NEXT_PUBLIC_GA_ID || "";
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <QueryClientProvider client={queryClient}>
-        {children}
-        <Toaster position="top-center" richColors />
-        {GA_ID && <GoogleAnalytics gaId={GA_ID} />}
+        {mounted && (
+          <>
+            {children}
+            <Toaster position="top-center" richColors />
+            {GA_ID && <GoogleAnalytics gaId={GA_ID} />}
+          </>
+        )}
+        {!mounted && <div style={{ visibility: 'hidden' }}>{children}</div>}
       </QueryClientProvider>
     </ThemeProvider>
   );
@@ -128,7 +138,7 @@ export function WeekendProvider({ children }: { children: React.ReactNode }) {
         );
         layoutContent = layoutContent.replace(
           /\{children\}/,
-          '<WeekendProvider suppressHydrationWarning>{children}</WeekendProvider>'
+          '<WeekendProvider>{children}</WeekendProvider>'
         );
         // Add suppressHydrationWarning to html tag for next-themes
         layoutContent = layoutContent.replace(
@@ -136,6 +146,19 @@ export function WeekendProvider({ children }: { children: React.ReactNode }) {
           '<html lang="en" suppressHydrationWarning>'
         );
         fs.writeFileSync(layoutPath, layoutContent);
+      }
+
+      // Update Tailwind Config for dark mode
+      const tailwindPath = path.join('tailwind.config.ts');
+      if (fs.existsSync(tailwindPath)) {
+        let tailwindContent = fs.readFileSync(tailwindPath, 'utf8');
+        if (!tailwindContent.includes('darkMode')) {
+          tailwindContent = tailwindContent.replace(
+            /content: \[/,
+            'darkMode: "class",\n  content: ['
+          );
+          fs.writeFileSync(tailwindPath, tailwindContent);
+        }
       }
 
       // Add simple .env.example
@@ -373,10 +396,11 @@ export default function Home() {
       fs.writeFileSync(path.join('src', 'app', 'page.tsx'), pageContent);
 
       console.log(chalk.green(`\n✅ Project ${projectName} created successfully with Pro features!`));
-      console.log(chalk.white(`\nWhat's new:`));
-      console.log(chalk.cyan(`  🌓 Light/Dark mode support (next-themes)`));
-      console.log(chalk.cyan(`  📅 React Day Picker + Date-fns`));
-      console.log(chalk.cyan(`  📊 Google Analytics ready (via @next/third-parties)`));
+      
+      console.log(chalk.yellow(`\n🌟 Loved this stack?`));
+      console.log(chalk.white(`   If this tool helped you launch your weekend project, consider`));
+      console.log(chalk.white(`   giving us a star or leaving a review on GitHub!`));
+      console.log(chalk.cyan(`   https://github.com/mohdasifabid/create-weekend-app`));
       
       console.log(chalk.white(`\nNext steps:`));
       console.log(chalk.cyan(`  cd ${projectName}`));
