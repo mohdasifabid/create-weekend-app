@@ -1,0 +1,31 @@
+{
+  "name": "create-weekend-app",
+  "version": "1.0.0",
+  "description": "Scaffold a Next.js project with the Weekend Stack (Zustand, React Query, Framer Motion, Recharts, Sonner)",
+  "main": "index.js",
+  "bin": {
+    "create-weekend-app": "index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test msg\" && exit 1"
+  },
+  "keywords": [
+    "nextjs",
+    "scaffold",
+    "zustand",
+    "react-query",
+    "framer-motion",
+    "recharts",
+    "sonner"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^11.1.0",
+    "fs-extra": "^11.2.0"
+  }
+}
