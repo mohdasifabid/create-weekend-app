@@ -11,7 +11,7 @@ const program = new Command();
 program
   .name('create-weekend-app')
   .description('Scaffold a Next.js project with the Weekend Stack')
-  .argument('<project-name>', 'Name of the project')
+  .argument('[project-name]', 'Name of the project', 'weekend-app')
   .action(async (projectName) => {
     const projectPath = path.join(process.cwd(), projectName);
 
@@ -21,7 +21,7 @@ program
       // 1. Run create-next-app
       console.log(chalk.cyan('📦 Running create-next-app...'));
       execSync(
-        `npx create-next-app@latest ${projectName} --typescript --tailwind --eslint --app --src-dir --import-alias "@/*" --use-npm --no-git`,
+        `npx create-next-app@latest ${projectName} --typescript --tailwind --eslint --app --src-dir --import-alias "@/*" --use-npm`,
         { stdio: 'inherit' }
       );
 

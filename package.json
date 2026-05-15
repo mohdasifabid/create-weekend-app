@@ -1,6 +1,6 @@
 {
   "name": "create-weekend-app",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Scaffold a Next.js project with the Weekend Stack (Zustand, React Query, Framer Motion, Recharts, Sonner)",
   "main": "index.js",
   "bin": {
