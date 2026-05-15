@@ -148,7 +148,7 @@ import { useStore } from '@/lib/store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, Minus, RotateCcw, TrendingUp, Activity, BarChart3, 
-  Sun, Moon, Calendar as CalendarIcon, Github 
+  Sun, Moon, Calendar as CalendarIcon, LayoutGrid 
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
@@ -198,7 +198,7 @@ export default function Home() {
               {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
             </button>
             <a href="#" className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-900 rounded-full transition-colors">
-              <Github size={20} />
+              <LayoutGrid size={20} />
             </a>
           </div>
         </nav>
