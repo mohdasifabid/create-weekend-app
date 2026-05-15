@@ -1,18 +1,18 @@
 {
-  "name": "create-weekend-app",
+  "name": "create-sprint-app",
   "version": "1.0.0",
-  "description": "Scaffold a Next.js project with the Weekend Stack (Zustand, React Query, Framer Motion, Recharts, Sonner)",
+  "description": "Scaffold a Next.js project with the Sprint Stack (Zustand, React Query, Framer Motion, Recharts, Sonner)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mohdasifabid/create-weekend-app.git"
+    "url": "git+https://github.com/mohdasifabid/create-sprint-app.git"
   },
   "bugs": {
-    "url": "https://github.com/mohdasifabid/create-weekend-app/issues"
+    "url": "https://github.com/mohdasifabid/create-sprint-app/issues"
   },
-  "homepage": "https://github.com/mohdasifabid/create-weekend-app#readme",
+  "homepage": "https://github.com/mohdasifabid/create-sprint-app#readme",
   "main": "index.js",
   "bin": {
-    "create-weekend-app": "index.js"
+    "create-sprint-app": "index.js"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -27,7 +27,8 @@
     "react-query",
     "framer-motion",
     "recharts",
-    "sonner"
+    "sonner",
+    "sprint"
   ],
   "author": "",
   "license": "MIT",

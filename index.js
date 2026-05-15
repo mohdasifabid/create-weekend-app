@@ -9,13 +9,13 @@ const { Command } = require('commander');
 const program = new Command();
 
 program
-  .name('create-weekend-app')
-  .description('Scaffold a Next.js project with the Weekend Stack')
-  .argument('[project-name]', 'Name of the project', 'weekend-app')
+  .name('create-sprint-app')
+  .description('Scaffold a Next.js project with the Sprint Stack')
+  .argument('[project-name]', 'Name of the project', 'sprint-app')
   .action(async (projectName) => {
     const projectPath = path.join(process.cwd(), projectName);
 
-    console.log(chalk.blue(`\n🚀 Initializing Weekend Stack project: ${chalk.bold(projectName)}...`));
+    console.log(chalk.blue(`\n🚀 Initializing Sprint Stack project: ${chalk.bold(projectName)}...`));
 
     try {
       // 1. Run create-next-app
@@ -28,7 +28,7 @@ program
       process.chdir(projectPath);
 
       // 2. Install Dependencies
-      console.log(chalk.cyan('\n🛠️ Installing Weekend Stack dependencies...'));
+      console.log(chalk.cyan('\n🛠️ Installing Sprint Stack dependencies...'));
       const dependencies = [
         'zustand',
         '@tanstack/react-query',
@@ -46,7 +46,7 @@ program
       execSync(`npm install ${dependencies.join(' ')}`, { stdio: 'inherit' });
 
       // 3. File Injection
-      console.log(chalk.cyan('\n🏗️ Injecting Weekend Stack components...'));
+      console.log(chalk.cyan('\n🏗️ Injecting Sprint Stack components...'));
 
       // Ensure directories exist
       fs.ensureDirSync(path.join('src', 'lib'));
@@ -88,7 +88,7 @@ export const useStore = create<CounterState>((set) => ({
 `;
       fs.writeFileSync(path.join('src', 'lib', 'store.ts'), storeContent);
 
-      // Create WeekendProvider
+      // Create SprintProvider
       const providerContent = `'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -97,7 +97,7 @@ import { useState, useEffect } from 'react';
 import { ThemeProvider } from 'next-themes';
 import { GoogleAnalytics } from '@next/third-parties/google';
 
-export function WeekendProvider({ children }: { children: React.ReactNode }) {
+export function SprintProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
   const [mounted, setMounted] = useState(false);
   
@@ -124,21 +124,21 @@ export function WeekendProvider({ children }: { children: React.ReactNode }) {
   );
 }
 `;
-      fs.writeFileSync(path.join('src', 'components', 'WeekendProvider.tsx'), providerContent);
+      fs.writeFileSync(path.join('src', 'components', 'SprintProvider.tsx'), providerContent);
 
       // Update Layout
       const layoutPath = path.join('src', 'app', 'layout.tsx');
       let layoutContent = fs.readFileSync(layoutPath, 'utf8');
       
       // Inject Provider
-      if (!layoutContent.includes('WeekendProvider')) {
+      if (!layoutContent.includes('SprintProvider')) {
         layoutContent = layoutContent.replace(
           /import type { Metadata }/g,
-          'import { WeekendProvider } from "@/components/WeekendProvider";\nimport type { Metadata }'
+          'import { SprintProvider } from "@/components/SprintProvider";\nimport type { Metadata }'
         );
         layoutContent = layoutContent.replace(
           /\{children\}/,
-          '<WeekendProvider>{children}</WeekendProvider>'
+          '<SprintProvider>{children}</SprintProvider>'
         );
         // Add suppressHydrationWarning to html tag for next-themes
         layoutContent = layoutContent.replace(
@@ -211,7 +211,7 @@ export default function Home() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <Activity className="text-white" size={18} />
             </div>
-            <span className="font-bold text-xl tracking-tight">Weekend.</span>
+            <span className="font-bold text-xl tracking-tight">Sprint.</span>
           </div>
           <div className="flex items-center gap-4">
             <button 
@@ -240,7 +240,7 @@ export default function Home() {
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               Live Analytics
             </div>
-            <p className="text-sm">Ready-to-use template for weekend warriors.</p>
+            <p className="text-sm">Ready-to-use template for high-speed sprints.</p>
           </div>
         </header>
 
@@ -398,9 +398,9 @@ export default function Home() {
       console.log(chalk.green(`\n✅ Project ${projectName} created successfully with Pro features!`));
       
       console.log(chalk.yellow(`\n🌟 Loved this stack?`));
-      console.log(chalk.white(`   If this tool helped you launch your weekend project, consider`));
+      console.log(chalk.white(`   If this tool helped you launch your sprint project, consider`));
       console.log(chalk.white(`   giving us a star or leaving a review on GitHub!`));
-      console.log(chalk.cyan(`   https://github.com/mohdasifabid/create-weekend-app`));
+      console.log(chalk.cyan(`   https://github.com/mohdasifabid/create-sprint-app`));
       
       console.log(chalk.white(`\nNext steps:`));
       console.log(chalk.cyan(`  cd ${projectName}`));
