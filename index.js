@@ -37,7 +37,11 @@ program
         'recharts',
         'sonner',
         'clsx',
-        'tailwind-merge'
+        'tailwind-merge',
+        'next-themes',
+        'react-day-picker',
+        'date-fns',
+        '@next/third-parties'
       ];
       execSync(`npm install ${dependencies.join(' ')}`, { stdio: 'inherit' });
 
@@ -90,15 +94,23 @@ export const useStore = create<CounterState>((set) => ({
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { useState } from 'react';
+import { ThemeProvider } from 'next-themes';
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 export function WeekendProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
+  
+  // Replace with your GA Measurement ID
+  const GA_ID = process.env.NEXT_PUBLIC_GA_ID || "";
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-      <Toaster position="top-center" richColors />
-    </QueryClientProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <QueryClientProvider client={queryClient}>
+        {children}
+        <Toaster position="top-center" richColors />
+        {GA_ID && <GoogleAnalytics gaId={GA_ID} />}
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 `;
@@ -109,38 +121,54 @@ export function WeekendProvider({ children }: { children: React.ReactNode }) {
       let layoutContent = fs.readFileSync(layoutPath, 'utf8');
       
       // Inject Provider
-      layoutContent = layoutContent.replace(
-        "import \"./globals.css\";",
-        "import \"./globals.css\";\nimport { WeekendProvider } from \"@/components/WeekendProvider\";"
-      );
-      layoutContent = layoutContent.replace(
-        "{children}",
-        "<WeekendProvider>{children}</WeekendProvider>"
-      );
-      fs.writeFileSync(layoutPath, layoutContent);
+      if (!layoutContent.includes('WeekendProvider')) {
+        layoutContent = layoutContent.replace(
+          /import type { Metadata }/g,
+          'import { WeekendProvider } from "@/components/WeekendProvider";\nimport type { Metadata }'
+        );
+        layoutContent = layoutContent.replace(
+          /\{children\}/,
+          '<WeekendProvider suppressHydrationWarning>{children}</WeekendProvider>'
+        );
+        // Add suppressHydrationWarning to html tag for next-themes
+        layoutContent = layoutContent.replace(
+          /<html lang="en">/,
+          '<html lang="en" suppressHydrationWarning>'
+        );
+        fs.writeFileSync(layoutPath, layoutContent);
+      }
+
+      // Add simple .env.example
+      fs.writeFileSync('.env.example', 'NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX\n');
 
       // Overwrite Page
       const pageContent = `'use client';
 
 import { useStore } from '@/lib/store';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Minus, RotateCcw, TrendingUp, Activity, BarChart3 } from 'lucide-react';
+import { 
+  Plus, Minus, RotateCcw, TrendingUp, Activity, BarChart3, 
+  Sun, Moon, Calendar as CalendarIcon, Github 
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
+import { DayPicker } from 'react-day-picker';
+import { format } from 'date-fns';
+import 'react-day-picker/dist/style.css';
 
 export default function Home() {
   const { count, history, increment, decrement, reset } = useStore();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [showCalendar, setShowCalendar] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (count !== 0 && count % 10 === 0) {
       toast.success(\`Milestone! Reached \${count}\`, {
         description: "You're making great progress!",
@@ -148,100 +176,156 @@ export default function Home() {
     }
   }, [count]);
 
+  if (!mounted) return null;
+
   return (
-    <main className="min-h-screen bg-neutral-950 text-neutral-50 p-8 md:p-24 font-sans">
-      <div className="max-w-5xl mx-auto space-y-12">
-        {/* Header */}
-        <header className="space-y-2">
+    <main className="min-h-screen bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-50 p-6 md:p-12 transition-colors duration-300">
+      <div className="max-w-6xl mx-auto space-y-10">
+        
+        {/* Navbar */}
+        <nav className="flex justify-between items-center border-b border-neutral-200 dark:border-neutral-800 pb-6">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <Activity className="text-white" size={18} />
+            </div>
+            <span className="font-bold text-xl tracking-tight">Weekend.</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-900 rounded-full transition-colors"
+            >
+              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            <a href="#" className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-900 rounded-full transition-colors">
+              <Github size={20} />
+            </a>
+          </div>
+        </nav>
+
+        {/* Hero Section */}
+        <header className="space-y-4">
           <motion.h1 
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-4xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent"
+            className="text-5xl md:text-6xl font-black tracking-tighter"
           >
-            Weekend Dashboard
+            Insights for your <span className="text-blue-600">Next Big Thing.</span>
           </motion.h1>
-          <p className="text-neutral-400">Real-time counter analytics with the Weekend Stack.</p>
+          <div className="flex items-center gap-4 text-neutral-500 dark:text-neutral-400">
+            <div className="flex items-center gap-2 px-3 py-1 bg-neutral-100 dark:bg-neutral-900 rounded-full text-xs font-medium uppercase tracking-widest">
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              Live Analytics
+            </div>
+            <p className="text-sm">Ready-to-use template for weekend warriors.</p>
+          </div>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Counter Card */}
-          <motion.div 
-            whileHover={{ scale: 1.02 }}
-            className="md:col-span-1 bg-neutral-900 border border-neutral-800 rounded-2xl p-8 flex flex-col items-center justify-center space-y-6 relative overflow-hidden"
-          >
-            <div className="absolute top-4 right-4 opacity-10">
-              <Activity size={80} />
-            </div>
-            
-            <span className="text-sm font-medium text-neutral-500 uppercase tracking-widest">Active Counter</span>
-            
-            <AnimatePresence mode="wait">
-              <motion.span 
-                key={count}
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 1.5 }}
-                className="text-7xl font-black tabular-nums"
-              >
-                {count}
-              </motion.span>
-            </AnimatePresence>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Counter Module */}
+          <div className="lg:col-span-1 space-y-6">
+            <motion.div 
+              whileHover={{ scale: 1.01 }}
+              className="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl p-8 flex flex-col items-center justify-center space-y-8 min-h-[400px]"
+            >
+              <div className="text-center space-y-1">
+                <h3 className="text-sm font-semibold uppercase tracking-widest text-neutral-500">Global Score</h3>
+                <AnimatePresence mode="wait">
+                  <motion.span 
+                    key={count}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.2 }}
+                    className="text-8xl font-black tabular-nums block"
+                  >
+                    {count}
+                  </motion.span>
+                </AnimatePresence>
+              </div>
 
-            <div className="flex gap-4">
-              <button 
-                onClick={decrement}
-                className="p-4 bg-neutral-800 hover:bg-neutral-700 rounded-full transition-colors group"
-              >
-                <Minus className="group-active:scale-90 transition-transform" />
-              </button>
-              <button 
-                onClick={reset}
-                className="p-4 bg-neutral-800 hover:bg-neutral-700 rounded-full transition-colors group"
-              >
-                <RotateCcw className="group-active:rotate-180 transition-transform duration-500" />
-              </button>
-              <button 
-                onClick={increment}
-                className="p-4 bg-blue-600 hover:bg-blue-500 rounded-full transition-colors group"
-              >
-                <Plus className="group-active:scale-125 transition-transform" />
-              </button>
-            </div>
-          </motion.div>
+              <div className="flex gap-4">
+                <button onClick={decrement} className="p-5 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl hover:shadow-lg transition-all active:scale-95">
+                  <Minus size={24} />
+                </button>
+                <button onClick={reset} className="p-5 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl hover:shadow-lg transition-all active:scale-95">
+                  <RotateCcw size={24} />
+                </button>
+                <button onClick={increment} className="p-5 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all active:scale-95">
+                  <Plus size={24} />
+                </button>
+              </div>
+            </motion.div>
 
-          {/* Analytics Card */}
+            {/* Date Picker Module */}
+            <div className="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl p-6 relative">
+              <button 
+                onClick={() => setShowCalendar(!showCalendar)}
+                className="w-full flex items-center justify-between p-4 bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700"
+              >
+                <div className="flex items-center gap-3">
+                  <CalendarIcon size={18} className="text-blue-600" />
+                  <span className="font-medium">{selectedDate ? format(selectedDate, 'PPP') : 'Pick a date'}</span>
+                </div>
+              </button>
+
+              <AnimatePresence>
+                {showCalendar && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute z-10 top-full left-0 right-0 mt-2 p-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-2xl"
+                  >
+                    <DayPicker
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => {
+                        setSelectedDate(date);
+                        setShowCalendar(false);
+                      }}
+                      className="mx-auto"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* Visualization Module */}
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="md:col-span-2 bg-neutral-900 border border-neutral-800 rounded-2xl p-8 space-y-4"
+            className="lg:col-span-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl p-8 space-y-8"
           >
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <TrendingUp size={20} className="text-emerald-400" />
-                <h2 className="text-lg font-semibold">Activity Trend</h2>
+              <div className="space-y-1">
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <TrendingUp className="text-blue-600" /> Activity Stream
+                </h2>
+                <p className="text-sm text-neutral-500">Visualizing your last 10 interactions</p>
               </div>
-              <BarChart3 size={20} className="text-neutral-500" />
+              <BarChart3 className="text-neutral-300 dark:text-neutral-700" size={32} />
             </div>
 
-            <div className="h-[240px] w-full pt-4">
+            <div className="h-[400px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={history}>
                   <defs>
                     <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#262626" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#1f1f1f' : '#e5e5e5'} vertical={false} />
                   <XAxis 
                     dataKey="time" 
-                    stroke="#525252" 
+                    stroke={theme === 'dark' ? '#525252' : '#a3a3a3'} 
                     fontSize={12} 
                     tickLine={false} 
                     axisLine={false}
                   />
                   <YAxis 
-                    stroke="#525252" 
+                    stroke={theme === 'dark' ? '#525252' : '#a3a3a3'} 
                     fontSize={12} 
                     tickLine={false} 
                     axisLine={false}
@@ -249,20 +333,21 @@ export default function Home() {
                   />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#171717', 
-                      borderColor: '#262626',
-                      borderRadius: '12px',
-                      color: '#fafafa'
+                      backgroundColor: theme === 'dark' ? '#171717' : '#ffffff', 
+                      borderColor: theme === 'dark' ? '#262626' : '#e5e5e5',
+                      borderRadius: '16px',
+                      color: theme === 'dark' ? '#fafafa' : '#171717',
+                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
                     }} 
                   />
                   <Area 
                     type="monotone" 
                     dataKey="value" 
-                    stroke="#3b82f6" 
-                    strokeWidth={3}
+                    stroke="#2563eb" 
+                    strokeWidth={4}
                     fillOpacity={1} 
                     fill="url(#colorValue)" 
-                    animationDuration={1000}
+                    animationDuration={1500}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -270,28 +355,14 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* Footer Tech Stack */}
-        <footer className="pt-12 border-t border-neutral-800 flex flex-wrap gap-8 justify-center opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold">Next.js 15</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-semibold">Zustand</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-semibold">React Query</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-semibold">Framer Motion</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-semibold">Recharts</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-semibold">Lucide</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-semibold">Sonner</span>
+        {/* Footer Tech List */}
+        <footer className="pt-12 border-t border-neutral-200 dark:border-neutral-800">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 opacity-40 hover:opacity-100 transition-opacity">
+            {['Next.js 15', 'Zustand', 'React Query', 'Framer Motion', 'Recharts', 'Day Picker', 'Google Analytics'].map((tech) => (
+              <div key={tech} className="text-xs font-bold uppercase tracking-widest text-center py-2 bg-neutral-100 dark:bg-neutral-900 rounded-lg">
+                {tech}
+              </div>
+            ))}
           </div>
         </footer>
       </div>
@@ -301,10 +372,15 @@ export default function Home() {
 `;
       fs.writeFileSync(path.join('src', 'app', 'page.tsx'), pageContent);
 
-      console.log(chalk.green(`\n✅ Project ${projectName} created successfully!`));
+      console.log(chalk.green(`\n✅ Project ${projectName} created successfully with Pro features!`));
+      console.log(chalk.white(`\nWhat's new:`));
+      console.log(chalk.cyan(`  🌓 Light/Dark mode support (next-themes)`));
+      console.log(chalk.cyan(`  📅 React Day Picker + Date-fns`));
+      console.log(chalk.cyan(`  📊 Google Analytics ready (via @next/third-parties)`));
+      
       console.log(chalk.white(`\nNext steps:`));
       console.log(chalk.cyan(`  cd ${projectName}`));
-      console.log(chalk.cyan(`  npm run dev\n`));
+      console.log(chalk.cyan(`  npm run dev -- --turbo\n`));
 
     } catch (error) {
       console.error(chalk.red('\n❌ Error creating project:'), error.message);
